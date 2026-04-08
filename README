@@ -1,0 +1,126 @@
+# GoSpeed - 终端网速监控工具
+
+[![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://go.dev/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)](https://github.com/gospeed/gospeed)
+
+> **实时网速监控 | 动态终端UI | 进程流量排行 | 优雅退出**
+
+GoSpeed 是一个用 Go 编写的终端网速监控工具，支持实时显示下载/上传速度、总流量、活跃连接数和进程级流量排行，界面类似 `top` 命令的动态刷新效果。
+
+---
+
+## 一、项目背景与痛点
+
+### 1.1 开发者日常困境
+
+| 痛点 | 说明 |
+|-----|------|
+| 网络慢不知道原因 | 是下载占满带宽还是后台进程在偷跑？ |
+| 系统工具太复杂 | `nethogs`、`iftop` 参数多，界面不直观 |
+| 需要 root 权限 | 很多网络工具需要 sudo，不方便 |
+| 跨平台支持差 | Linux 工具在 macOS 上不能用 |
+| 无法脚本化 | 想在脚本里获取网速数据很困难 |
+
+### 1.2 现有方案对比
+
+| 工具 | 优点 | 缺点 |
+|-----|------|------|
+| `nethogs` | 显示进程流量 | 需要 root，界面简陋 |
+| `iftop` | 显示连接详情 | 界面复杂，学习成本高 |
+| `nload` | 图形化直观 | 无进程信息，已停止维护 |
+| `bmon` | 功能强大 | 依赖多，配置复杂 |
+| **GoSpeed** | 单二进制，开箱即用 | 功能相对简单 |
+
+---
+
+## 二、GoSpeed 解决方案
+
+### 2.1 核心理念
+
+> **一个命令，实时掌握网络状况**
+
+- **0 配置**：下载即用，自动检测网卡
+- **0 依赖**：纯 Go 实现，单文件二进制
+- **可视化**：进度条 + 颜色 + 动态刷新
+- **可扩展**：支持 JSON 输出，方便脚本集成
+
+### 2.2 功能矩阵
+
+| 功能模块 | 核心能力 | 技术实现 |
+|---------|---------|---------|
+| 网速监控 | 实时显示下载/上传速度 | 读取 `/proc/net/dev` (Linux) |
+| 流量统计 | 累计下载/上传总量 | 原子计数器 |
+| 进度条 | 可视化网速占比 | ANSI 字符绘图 |
+| 连接数统计 | TCP/UDP 活跃连接 | 解析 `/proc/net/tcp` |
+| 进程排行 | 流量占用 Top N | 可选的 `gopacket` 集成 |
+| 跨平台 | Linux/macOS/Windows | build tags 条件编译 |
+| JSON 输出 | 便于脚本集成 | `encoding/json` |
+| 优雅退出 | Ctrl+C 恢复终端 | `os/signal` + `term` |
+
+## 三、项目架构
+
+### 3.1 项目架构
+
+gospeed/
+├── README.md                    # 项目文档
+├── go.mod                       # Go 模块依赖
+├── go.sum                       # 依赖校验
+├── Makefile                     # 构建脚本
+├── .golangci.yml                # 代码规范配置
+│
+├── cmd/
+│   └── gospeed/
+│       └── main.go              # 程序入口 (80 行)
+│
+├── internal/
+│   ├── monitor/
+│   │   ├── monitor.go           # 监控主循环 (60 行)
+│   │   ├── interface.go         # 网卡流量读取 (100 行)
+│   │   ├── connection.go        # 连接数统计 (70 行)
+│   │   └── process.go           # 进程流量统计 (120 行)
+│   │
+│   ├── display/
+│   │   ├── tui.go               # 终端 UI 渲染 (150 行)
+│   │   ├── progressbar.go       # 进度条绘制 (40 行)
+│   │   ├── color.go             # ANSI 颜色 (30 行)
+│   │   └── json.go              # JSON 输出 (30 行)
+│   │
+│   ├── stats/
+│   │   ├── counter.go           # 原子计数器 (50 行)
+│   │   ├── history.go           # 历史数据（计算速率）(40 行)
+│   │   └── aggregator.go        # 数据聚合 (50 行)
+│   │
+│   └── config/
+│       └── config.go            # 配置解析 (40 行)
+│
+├── pkg/
+│   ├── term/
+│   │   ├── term.go              # 终端控制抽象 (60 行)
+│   │   ├── term_linux.go        # Linux 实现 (20 行)
+│   │   └── term_windows.go      # Windows 实现 (30 行)
+│   │
+│   └── errors/
+│       └── errors.go            # 自定义错误 (20 行)
+│
+├── tests/
+│   ├── unit/
+│   │   ├── counter_test.go      # 计数器测试
+│   │   ├── parser_test.go       # 数据解析测试
+│   │   └── display_test.go      # 显示测试
+│   │
+│   └── integration/
+│       └── e2e_test.go          # 端到端测试
+│
+├── scripts/
+│   ├── build.sh                 # 构建脚本
+│   ├── test.sh                  # 测试脚本
+│   └── install.sh               # 安装脚本
+│
+└── .github/
+    └── workflows/
+        ├── ci.yml               # 持续集成
+        └── release.yml          # 自动发布
+
+
+
