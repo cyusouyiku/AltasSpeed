@@ -75,8 +75,8 @@ gospeed/
 │
 ├── internal/
 │   ├── monitor/
-│   │   ├── monitor.go           # 监控主循环 (60 行)
-│   │   ├── interface.go         # 网卡流量读取 (100 行)
+│   │   ├── monitor.go           # 监控主循环 (60 行)（已完成）
+│   │   ├── interface.go         # 网卡流量读取 (100 行)（已完成）
 │   │   ├── connection.go        # 连接数统计 (70 行)
 │   │   └── process.go           # 进程流量统计 (120 行)
 │   │
